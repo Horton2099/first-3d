@@ -4,11 +4,32 @@ extends CharacterBody3D
 @export var min_speed = 10
 #Maximum speed of the mob in meters per sec
 @export var max_speed = 18
+# Horizontal bounce when enemies collide
+@export var impulse_bounce = 10
 
 # Emitted when the player jumped on the mob.
 signal squashed
 
 func _physics_process(delta):
+	
+	# Iterate through collisions and find those with enemies
+	for index in range(get_slide_collision_count()):
+		var collision = get_slide_collision(index)
+		# check for duplicated and continue past null
+		if collision.get_collider() == null:
+			continue
+		if collision.get_collider().is_in_group("mob"): # || collision.get_collider().is_in_group("player"):
+			# collsion.get_normal() poitns away from mob
+			var mob = collision.get_normal()
+			# Bounce in the opposite direction of the impact normal
+			velocity += mob * impulse_bounce
+		if velocity.length() > 0.1:
+			look_at(position + velocity, Vector3.UP)
+			
+	var max_mob_speed = 20.0
+	if velocity.length() > max_mob_speed:
+		velocity = velocity.normalized() * max_mob_speed
+			
 	move_and_slide()
 #this function will be called from the Main scene
 func initialize(start_position, player_position):
